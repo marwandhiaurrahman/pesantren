@@ -1,11 +1,8 @@
 @extends('adminlte::page')
-
 @section('title', 'Role & Permssion')
-
 @section('content_header')
     <h1>Role & Permission</h1>
 @stop
-
 @section('content')
     <div class="row">
         <div class="col-md-3">
@@ -30,13 +27,13 @@
                     <x-adminlte-card title="Tabel Role" theme="secondary" collapsible>
                         <div class="row">
                             <div class="col-md-7">
-                                <x-adminlte-button label="Tambah Role" class="btn-sm" theme="success" title="Tambah Role"
-                                    icon="fas fa-plus" data-toggle="modal" data-target="#createRole" />
+                                <x-adminlte-button id="tambahRole" label="Tambah Role" class="btn-sm" theme="success"
+                                    title="Tambah Role" icon="fas fa-plus" />
                             </div>
                             <div class="col-md-5">
                                 <form action="{{ route('role.index') }}" method="get">
                                     <x-adminlte-input name="role" placeholder="Pencarian Role" igroup-size="sm"
-                                        value="{{ $request->search }}">
+                                        value="{{ $request->role }}">
                                         <x-slot name="appendSlot">
                                             <x-adminlte-button type="submit" theme="outline-primary" label="Cari!" />
                                         </x-slot>
@@ -73,16 +70,13 @@
                                         {{ $item->users->count() }}
                                     </td>
                                     <td>
-                                        <form action="{{ route('role.destroy', $item) }}" method="POST">
-                                            <x-adminlte-button class="btn-xs" theme="warning" icon="fas fa-edit"
-                                                data-toggle="tooltip" title="Edit {{ $item->name }}"
-                                                onclick="window.location='{{ route('role.edit', $item) }}'" />
-                                            @csrf
-                                            @method('DELETE')
-                                            <x-adminlte-button class="btn-xs" theme="danger" icon="fas fa-trash-alt"
-                                                type="submit"
-                                                onclick="return confirm('Apakah anda akan menghapus Role {{ $item->name }} ?')" />
-                                        </form>
+                                        <x-adminlte-button class="btn-xs editRole" theme="warning" icon="fas fa-edit"
+                                            title="Edit {{ $item->name }}" data-id="{{ $item->id }}"
+                                            data-name="{{ $item->name }}"
+                                            data-permission="{{ $item->permissions->pluck('name') }}" />
+                                        <x-adminlte-button class="btn-xs deleteRole" theme="danger" icon="fas fa-trash-alt"
+                                            title="Hapus Permission {{ $item->name }} " data-id="{{ $item->id }}"
+                                            data-name="{{ $item->name }}" />
                                     </td>
                                 </tr>
                             @endforeach
@@ -99,8 +93,8 @@
                             </div>
                             <div class="col-md-6">
                                 <form action="{{ route('role.index') }}" method="get">
-                                    <x-adminlte-input name="search" placeholder="Pencarian Permission" igroup-size="sm"
-                                        value="{{ $request->search }}">
+                                    <x-adminlte-input name="permission" placeholder="Pencarian Permission" igroup-size="sm"
+                                        value="{{ $request->permission }}">
                                         <x-slot name="appendSlot">
                                             <x-adminlte-button type="submit" theme="outline-primary" label="Cari!" />
                                         </x-slot>
@@ -151,33 +145,110 @@
             </div>
         </div>
     </div>
-    <x-adminlte-modal id="createRole" title="Tambah Role" theme="success" v-centered static-backdrop scrollable>
-        <form action="{{ route('role.store') }}" id="myform" method="post">
+    <x-adminlte-modal id="modalRole" icon="fas fa-users-cog" title="Role" theme="success" v-centered static-backdrop>
+        <form action="" id="formRole" method="POST">
             @csrf
-            <x-adminlte-input name="name" label="Nama" placeholder="Nama Lengkap" enable-old-support required />
-            <x-adminlte-select2 name="permission" label="Permission" placeholder="Select Permission" enable-old-support
-                multiple required>
+            <input type="hidden" name="id" id="idRole">
+            <input type="hidden" name="_method" id="methodRole">
+            <x-adminlte-input id="nameRole" name="name" label="Nama" placeholder="Nama Role" enable-old-support
+                required />
+            <x-adminlte-select2 id="permissionRole" name="permission[]" label="Permission"
+                placeholder="Silahkan pilih permission" enable-old-support multiple required>
                 @foreach ($permissions as $item)
                     <option value="{{ $item->name }}">{{ $item->name }}</option>
                 @endforeach
             </x-adminlte-select2>
         </form>
+        <form id="formDeleteRole" action="" method="POST">
+            @csrf
+            @method('DELETE')
+        </form>
         <x-slot name="footerSlot">
-            <x-adminlte-button form="myform" class="mr-auto" type="submit" theme="success" label="Simpan" />
+            <x-adminlte-button id="storeRole" class="mr-auto" theme="success" label="Simpan" icon="fas fa-save" />
+            <x-adminlte-button id="updateRole" class="mr-auto" theme="warning" label="Edit" icon="fas fa-edit" />
             <x-adminlte-button theme="danger" label="Kembali" data-dismiss="modal" />
         </x-slot>
     </x-adminlte-modal>
-    <x-adminlte-modal id="createPermission" title="Tambah Permission" theme="success" v-centered static-backdrop
-        scrollable>
-        <form action="{{ route('permission.store') }}" id="myform2" method="post">
+    <x-adminlte-modal id="modalPermission" icon="fas fa-user-shield" title="Permission" theme="success" v-centered
+        static-backdrop>
+        <form action="" id="formPermission" method="post">
             @csrf
             <x-adminlte-input name="name" label="Nama" placeholder="Nama Lengkap" enable-old-support required />
         </form>
         <x-slot name="footerSlot">
-            <x-adminlte-button form="myform2" class="mr-auto" type="submit" theme="success" label="Simpan" />
+            <x-adminlte-button form="myform2" class="mr-auto" theme="success" label="Simpan" />
+            <x-adminlte-button form="myform" class="mr-auto" theme="warning" label="Edit" icon="fas fa-edit" />
             <x-adminlte-button theme="danger" label="Kembali" data-dismiss="modal" />
         </x-slot>
     </x-adminlte-modal>
 @stop
 @section('plugins.Datatables', true)
 @section('plugins.Select2', true)
+@section('plugins.Sweetalert2', true)
+@section('js')
+    <script>
+        $(function() {
+            $('#tambahRole').click(function() {
+                $.LoadingOverlay("show");
+                $('#storeRole').show();
+                $('#updateRole').hide();
+                $('#formRole').trigger("reset");
+                $("#permissionRole").val(null).trigger('change');
+                $('#modalRole').modal('show');
+                $.LoadingOverlay("hide");
+            });
+            $('.editRole').click(function() {
+                $.LoadingOverlay("show");
+                $('#storeRole').hide();
+                $('#updateRole').show()
+                $('#formUser').trigger("reset");
+                // get
+                var id = $(this).data("id");
+                var name = $(this).data("name");
+                var permission = $(this).data("permission");
+                // set
+                $('#idRole').val(id);
+                $('#nameRole').val(name);
+                $("#permissionRole").val(permission).trigger('change');
+                $('#modalRole').modal('show');
+                $.LoadingOverlay("hide");
+            });
+            $('#storeRole').click(function(e) {
+                $.LoadingOverlay("show");
+                e.preventDefault();
+                var url = "{{ route('role.store') }}";
+                $('#formRole').attr('action', url);
+                $("#methodRole").prop('', true);
+                $('#formRole').submit();
+
+            });
+            $('#updateRole').click(function(e) {
+                $.LoadingOverlay("show");
+                e.preventDefault();
+                var url = "{{ route('role.store') }}";
+                $('#formRole').attr('action', url);
+                $("#methodRole").prop('', true);
+                $('#formRole').submit();
+            });
+            $('.deleteRole').click(function(e) {
+                e.preventDefault();
+                var name = $(this).data("name");
+                swal.fire({
+                    title: 'Apakah anda ingin menghapus role ' + name + ' ?',
+                    showConfirmButton: false,
+                    showDenyButton: true,
+                    showCancelButton: true,
+                    denyButtonText: `Ya, Hapus`,
+                }).then((result) => {
+                    if (result.isDenied) {
+                        $.LoadingOverlay("show");
+                        var id = $(this).data("id");
+                        var url = "{{ route('role.index') }}/" + id;
+                        $('#formDeleteRole').attr('action', url);
+                        $('#formDeleteRole').submit();
+                    }
+                })
+            });
+        });
+    </script>
+@endsection
