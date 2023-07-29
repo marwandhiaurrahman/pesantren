@@ -88,8 +88,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <x-adminlte-button label="Tambah Permission" class="btn-sm" theme="success"
-                                    title="Tambah Permission" icon="fas fa-plus" data-toggle="modal"
-                                    data-target="#createPermission" />
+                                    title="Tambah Permission" icon="fas fa-plus" id="tambahPermission" />
                             </div>
                             <div class="col-md-6">
                                 <form action="{{ route('role.index') }}" method="get">
@@ -126,16 +125,12 @@
                                         {{ $item->roles->count() }}
                                     </td>
                                     <td>
-                                        <form action="{{ route('permission.destroy', $item) }}" method="POST">
-                                            <x-adminlte-button class="btn-xs" theme="warning" icon="fas fa-edit"
-                                                data-toggle="tooltip" title="Edit {{ $item->name }}"
-                                                onclick="window.location='{{ route('permission.edit', $item) }}'" />
-                                            @csrf
-                                            @method('DELETE')
-                                            <x-adminlte-button class="btn-xs" theme="danger" icon="fas fa-trash-alt"
-                                                type="submit"
-                                                onclick="return confirm('Apakah anda akan menghapus Permission {{ $item->name }} ?')" />
-                                        </form>
+                                        <x-adminlte-button class="btn-xs editPermission" theme="warning" icon="fas fa-edit"
+                                            title="Edit {{ $item->name }}" data-id="{{ $item->id }}"
+                                            data-name="{{ $item->name }}" />
+                                        <x-adminlte-button class="btn-xs deletePermission" theme="danger"
+                                            icon="fas fa-trash-alt" title="Hapus Permission {{ $item->name }} "
+                                            data-id="{{ $item->id }}" data-name="{{ $item->name }}" />
                                     </td>
                                 </tr>
                             @endforeach
@@ -173,11 +168,20 @@
         static-backdrop>
         <form action="" id="formPermission" method="post">
             @csrf
-            <x-adminlte-input name="name" label="Nama" placeholder="Nama Lengkap" enable-old-support required />
+            <input type="hidden" name="id" id="idPermission">
+            <input type="hidden" name="_method" id="methodPermission">
+            <x-adminlte-input id="namePermission" name="name" label="Nama" placeholder="Nama Lengkap"
+                enable-old-support required />
+        </form>
+        <form id="formDeletePermission" action="" method="POST">
+            @csrf
+            @method('DELETE')
         </form>
         <x-slot name="footerSlot">
-            <x-adminlte-button form="myform2" class="mr-auto" theme="success" label="Simpan" />
-            <x-adminlte-button form="myform" class="mr-auto" theme="warning" label="Edit" icon="fas fa-edit" />
+            <x-adminlte-button id="storePermission" class="mr-auto" theme="success" label="Simpan"
+                icon="fas fa-save" />
+            <x-adminlte-button id="updatePermission" class="mr-auto" theme="warning" label="Edit"
+                icon="fas fa-edit" />
             <x-adminlte-button theme="danger" label="Kembali" data-dismiss="modal" />
         </x-slot>
     </x-adminlte-modal>
@@ -188,6 +192,7 @@
 @section('js')
     <script>
         $(function() {
+            // crud role
             $('#tambahRole').click(function() {
                 $.LoadingOverlay("show");
                 $('#storeRole').show();
@@ -246,6 +251,65 @@
                         var url = "{{ route('role.index') }}/" + id;
                         $('#formDeleteRole').attr('action', url);
                         $('#formDeleteRole').submit();
+                    }
+                })
+            });
+            // crud permission
+            $('#tambahPermission').click(function() {
+                $.LoadingOverlay("show");
+                $('#storePermission').show();
+                $('#updatePermission').hide();
+                $('#formPermission').trigger("reset");
+                $('#modalPermission').modal('show');
+                $.LoadingOverlay("hide");
+            });
+            $('.editPermission').click(function() {
+                $.LoadingOverlay("show");
+                $('#storePermission').hide();
+                $('#updatePermission').show()
+                $('#formPermission').trigger("reset");
+                // get
+                var id = $(this).data("id");
+                var name = $(this).data("name");
+                // set
+                $('#idPermission').val(id);
+                $('#namePermission').val(name);
+                $('#modalPermission').modal('show');
+                $.LoadingOverlay("hide");
+            });
+            $('#storePermission').click(function(e) {
+                $.LoadingOverlay("show");
+                e.preventDefault();
+                var url = "{{ route('permission.store') }}";
+                $('#formPermission').attr('action', url);
+                $("#methodPermission").prop('', true);
+                $('#formPermission').submit();
+
+            });
+            $('#updatePermission').click(function(e) {
+                $.LoadingOverlay("show");
+                e.preventDefault();
+                var url = "{{ route('permission.store') }}";
+                $('#formPermission').attr('action', url);
+                $("#methodPermission").prop('', true);
+                $('#formPermission').submit();
+            });
+            $('.deletePermission').click(function(e) {
+                e.preventDefault();
+                var name = $(this).data("name");
+                swal.fire({
+                    title: 'Apakah anda ingin menghapus permission ' + name + ' ?',
+                    showConfirmButton: false,
+                    showDenyButton: true,
+                    showCancelButton: true,
+                    denyButtonText: `Ya, Hapus`,
+                }).then((result) => {
+                    if (result.isDenied) {
+                        $.LoadingOverlay("show");
+                        var id = $(this).data("id");
+                        var url = "{{ route('permission.index') }}/" + id;
+                        $('#formDeletePermission').attr('action', url);
+                        $('#formDeletePermission').submit();
                     }
                 })
             });
